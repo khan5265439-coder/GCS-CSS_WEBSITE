@@ -1,0 +1,17 @@
+/* App level - Particles settings */
+#tsparticles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;           /* Place particles behind all content */
+  pointer-events: none;  /* Allow clicks & scroll through particles */
+}
+
+/* Navbar and Footer z-index */
+nav,
+footer {
+  position: relative;
+  z-index: 2; /* Above particles */
+}

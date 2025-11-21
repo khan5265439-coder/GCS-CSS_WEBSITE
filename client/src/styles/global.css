@@ -1,0 +1,101 @@
+/* GLOBAL STYLES */
+
+@import './variable.css';
+
+/* Root layout */
+html,
+body {
+  min-height: 100%;
+  height: auto;
+  overflow-x: hidden; /* avoid horizontal scroll */
+  scroll-behavior: smooth; /* Enable smooth scrolling */
+}
+
+/* Body */
+body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #0f172a;
+  color: #fff;
+  margin: 0;
+  padding: 0;
+  font-size: 1rem; /* Base font size */
+  line-height: 1.6; /* Increased line height for better readability */
+}
+
+/* Page container to avoid navbar overlap */
+.page-container {
+  padding-top: 80px; /* height of fixed navbar */
+  min-height: calc(100vh - 80px - 80px); /* navbar + footer approx */
+}
+
+/* Glass Effect */
+.glass {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-medium);
+}
+
+.glass:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Links */
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color var(--transition-fast);
+}
+
+/* Optional: keep, but be aware it may tint text on hover */
+a:hover {
+  color: var(--primary-color);
+}
+
+/* Buttons */
+button {
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all var(--transition-fast);
+  border: none;
+  outline: none;
+}
+
+/* Scale buttons on hover */
+button:hover {
+  transform: scale(1.05);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--text-color);
+  margin: 0;
+}
+
+p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary-color);
+  border-radius: 8px;
+  transition: background-color 0.3s ease;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--secondary-color); /* Change color on hover */
+}

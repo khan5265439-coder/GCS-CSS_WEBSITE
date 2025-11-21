@@ -1,0 +1,48 @@
+:root {
+  /* Colors */
+  --primary-color: #00bfffc1; /* Adjusted for better contrast */
+  --secondary-color: #ff6ec7;
+
+  --text-color: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+
+  /* Background Colors */
+  --bg-gradient-start: #264755;
+  --bg-gradient-end: #1d3138;
+  --bg-dark: #0a0f1a;         /* added */
+  --bg-darker: #001a33;       /* added */
+  
+  /* Glass Effect */
+  --glass-bg: rgba(255, 255, 255, 0.08); /* Increased opacity for clarity */
+  --glass-border: rgba(255, 255, 255, 0.2);
+
+  /* Layout */
+  --navbar-height: 70px;  /* corrected */
+  --footer-height: 80px;
+
+  /* Fonts */
+  --font-sans: 'Poppins', sans-serif;
+  --font-mono: 'Fira Code', monospace;
+
+  /* Border Radius */
+  --radius-sm: 4px;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 6px rgba(21, 21, 22, 0.2);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+  --shadow-lg: 0 8px 20px rgba(0,0,0,0.5);
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 32px;
+  --space-xl: 64px;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease-in-out;
+  --transition-medium: 0.4s ease-in-out;
+  --transition-slow: 0.6s ease-in-out;
+}

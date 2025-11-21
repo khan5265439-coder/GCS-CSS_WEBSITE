@@ -1,0 +1,47 @@
+/* Tailwind's base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles (if needed) */
+@layer base {
+  /* Body and text color */
+  body {
+    background-color: #0f172a;
+    color: white;
+    font-family: 'Poppins', sans-serif;
+  }
+}
+
+@layer components {
+  /* Custom button styles or other components can be defined here */
+}
+
+@layer utilities {
+  /* Additional custom utility classes can go here */
+}
+/* --- Advanced Scrollbar --- */
+@layer base {
+  /* Width */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  /* Track (Background) */
+  ::-webkit-scrollbar-track {
+    background: #020617; 
+    border-left: 1px solid #1e293b;
+  }
+ 
+  /* Handle (The moving part) */
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #3b82f6, #FFD700); /* Blue to Gold Gradient */
+    border-radius: 5px;
+    border: 2px solid #020617; /* Creates a "floating" effect */
+  }
+
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #2563eb, #fbbf24);
+  }
+}
