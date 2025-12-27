@@ -30,7 +30,7 @@ import Registrations from "./pages/Registrations";
 import AdminTeam from "./pages/AdminTeam";
 
 // Helper: Standardized API URL for the entire app
-export const API_URL = "https://css-backend-7q2c.onrender.com" || "http://localhost:3001/api";
+export const API_URL = "https://css-backend-7q2c.onrender.com/api" || "http://localhost:3001/api";
 
 function ScrollToTop() {
   const { pathname } = useLocation();
