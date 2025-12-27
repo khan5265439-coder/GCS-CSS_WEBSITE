@@ -1,17 +1,29 @@
-/* App level - Particles settings */
+/* --- Global Particles Layer --- */
 #tsparticles {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: -1;           /* Place particles behind all content */
-  pointer-events: none;  /* Allow clicks & scroll through particles */
+  z-index: -1;
+  pointer-events: none;
 }
 
-/* Navbar and Footer z-index */
-nav,
-footer {
+/* --- Layout Layering --- */
+nav, footer {
   position: relative;
-  z-index: 2; /* Above particles */
+  z-index: 50; /* Ensuring Navbar is always on top of content and particles */
+}
+
+/* --- Admin Dashboard Overrides --- */
+/* This class will be applied to the main wrapper in Admin pages */
+.admin-theme {
+  background: #020617 !important; /* Deeper black for the command center */
+  min-height: 100vh;
+}
+
+/* Smooth page transitions for AnimatePresence */
+.page-transition-wrapper {
+  width: 100%;
+  height: 100%;
 }

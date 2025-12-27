@@ -2,16 +2,19 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import EventCard from "../components/EventCard";
+import HeroSlider from "../components/HeroSlider";
 import { Helmet } from 'react-helmet-async';
-import { API_URL } from "../utils/config"; // <--- IMPORT THIS
+import { API_URL } from "../utils/config";
 
+/**
+ * @description Home page with HeroSlider integrated into the existing background design.
+ */
 export default function Home() {
   const [featuredEvents, setFeaturedEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // FETCH REAL EVENTS FROM DATABASE
   useEffect(() => {
-    fetch(`http://localhost:3001/api"/events`) 
+    fetch(`${API_URL}/events/upcoming`) 
       .then((res) => res.json())
       .then((data) => {
         setFeaturedEvents(data.slice(0, 3));
@@ -25,7 +28,7 @@ export default function Home() {
 
   return (
     <motion.div 
-      className="min-h-screen bg-[#020617] text-white overflow-hidden selection:bg-cyan-500/30"
+      className="min-h-screen bg-[#020617] dark:bg-slate-950 text-white overflow-hidden selection:bg-cyan-500/30 transition-colors duration-500"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -39,8 +42,13 @@ export default function Home() {
       {/* HERO SECTION */}
       <div className="relative w-full h-[92vh] flex flex-col items-center justify-center px-4 overflow-hidden">
         
+        {/* --- HERO SLIDER LAYER (Phase 1) --- */}
+        <div className="absolute inset-0 z-0 opacity-40">
+           <HeroSlider />
+        </div>
+
         {/* --- BACKGROUND DESIGN START --- */}
-        <div className="absolute inset-0 z-0 w-full h-full bg-[linear-gradient(to_right,#FFD70020_1px,transparent_1px),linear-gradient(to_bottom,#FFD70020_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+        <div className="absolute inset-0 z-1 w-full h-full bg-[linear-gradient(to_right,#FFD70020_1px,transparent_1px),linear-gradient(to_bottom,#FFD70020_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
 
         <motion.div
           className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-[120px] pointer-events-none"
@@ -53,7 +61,7 @@ export default function Home() {
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
         
-        <div className="absolute z-0 w-full h-full bg-gradient-to-b from-transparent via-[#020617]/50 to-[#020617]" />
+        <div className="absolute z-1 w-full h-full bg-gradient-to-b from-transparent via-[#020617]/50 to-[#020617]" />
         {/* --- BACKGROUND DESIGN END --- */}
 
 
@@ -82,7 +90,7 @@ export default function Home() {
             Computer <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-[#FFA500]">Science</span> Society
           </h1>
 
-          <p className="mt-6 text-slate-300 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
+          <p className="mt-6 text-slate-300 dark:text-slate-400 text-base sm:text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
             Inspiring and empowering tech enthusiasts at GCU Lahore — through
             workshops, competitions, seminars, bootcamps, and a thriving community culture.
           </p>
@@ -141,7 +149,7 @@ export default function Home() {
                   viewport={{ once: true }}
                   transition={{ duration: 0.6 }}
                   whileHover={{ scale: 1.03 }}
-                  className="bg-slate-900/50 backdrop-blur-xl rounded-2xl p-6 border border-slate-800 shadow-xl hover:shadow-2xl hover:border-blue-500/30 transition-all duration-300 group"
+                  className="bg-slate-900/50 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl p-6 border border-slate-800 shadow-xl hover:shadow-2xl hover:border-blue-500/30 transition-all duration-300 group"
                 >
                   <EventCard
                     title={item.title}

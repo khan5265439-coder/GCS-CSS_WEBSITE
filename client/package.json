@@ -22,6 +22,7 @@
     "react-router-dom": "^7.9.5",
     "react-tsparticles": "^2.12.2",
     "recharts": "^3.4.1",
+    "swiper": "^12.0.3",
     "tsparticles": "^3.9.1"
   },
   "devDependencies": {

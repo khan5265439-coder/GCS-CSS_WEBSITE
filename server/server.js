@@ -5,34 +5,54 @@ const connectDB = require("./config/db");
 
 const app = express();
 
-// Connect to MongoDB
+// 1. Core Connection
 connectDB();
 
-// Middleware
+// 2. Global Middleware
 app.use(cors());
 app.use(express.json());
 
-// --- PUBLIC ROUTES ---
-app.use("/api/register", require("./routes/registrationRoutes"));
-app.use("/api/membership", require("./routes/membershipRoutes")); 
-app.use("/api/announcements", require("./routes/announcementRoutes")); // Public News
-app.use("/api/events", require("./routes/eventRoutes")); 
+/**
+ * --- UNIFIED ROUTE ARCHITECTURE ---
+ * Every route here follows a strict "Feature-First" naming convention.
+ */
 
-// --- ADMIN ROUTES ---
+// ZONE A: IDENTITY & AUTH (Login, Password Setup, Contact Inbox)
 app.use("/api/admin", require("./routes/adminRoutes")); 
-app.use("/api/admin/memberships", require("./routes/adminMembershipRoutes"));
 
-app.use("/api/admin/announcements", require("./routes/announcementRoutes")); 
+// ZONE B: CONTENT MANAGEMENT (Events, Announcements, Executive Board)
+app.use("/api/events", require("./routes/eventRoutes")); 
+app.use("/api/announcements", require("./routes/announcementRoutes")); 
+app.use("/api/team", require("./routes/teamRoutes"));
 
-// Basic Error Handler
-app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ message: "Something went wrong!" });
+// ZONE C: FORMS & APPLICATIONS (Event Regs, Membership Apps)
+app.use("/api/memberships", require("./routes/membershipRoutes")); 
+app.use("/api/register", require("./routes/registrationRoutes"));
+
+// 3. 404 Route Handler
+app.use((req, res) => {
+  res.status(404).json({ success: false, message: "API Route not found" });
 });
 
+// 4. Global Error Boundary (Prevents Server Crashes)
+app.use((err, req, res, next) => {
+  console.error("RED ALERT - SERVER ERROR:", err.stack);
+  res.status(500).json({ 
+    success: false, 
+    message: "Critical Infrastructure Error. Check Backend Console." 
+  });
+});
 
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`
+  🚀 SYSTEM ONLINE
+  ====================================
+  Port: ${PORT}
+  Mode: Development/Refinement
+  Uplink: MongoDB Connected
+  ====================================
+  `);
+});
 
-// Req for vercel
 module.exports = app;

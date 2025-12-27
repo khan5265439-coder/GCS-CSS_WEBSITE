@@ -1,205 +1,225 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { API_URL } from "../App"; 
 
 export default function AdminMemberships() {
   const [memberships, setMemberships] = useState([]);
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const token = localStorage.getItem("adminToken");
 
-  // Fetch membership applications
-  useEffect(() => {
-    const fetchMemberships = async () => {
-      try {
-        const token = localStorage.getItem("adminToken");
-        const response = await fetch("http://localhost:3001/api/admin/memberships", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!response.ok) throw new Error("Error fetching memberships.");
-
-        const data = await response.json();
-        setMemberships(data);
-      } catch (error) {
-        setError(error.message || "Error fetching memberships.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchMemberships();
-  }, []);
-
-  const approveMembership = async (id) => {
+  const fetchMemberships = async () => {
     try {
-      const token = localStorage.getItem("adminToken");
-      const response = await fetch(`http://localhost:3001/api"/admin/memberships/${id}`, {
-        method: "PATCH",
+      const response = await fetch(`${API_URL}/memberships/admin/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) throw new Error("Error approving membership.");
-
       const data = await response.json();
-      // alert(data.message); 
-      setMemberships(memberships.map((membership) =>
-        membership._id === id ? { ...membership, approved: true } : membership
-      ));
+      const list = Array.isArray(data) ? data : (data.success ? data.data || [] : []);
+      setMemberships(list);
     } catch (error) {
-      alert(error.message || "Error approving membership.");
+      toast.error("Database Link Failure.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Delete membership
-  const deleteMembership = async (id) => {
-    if(!window.confirm("Are you sure you want to reject and delete this application?")) return;
+ useEffect(() => {
+  const token = localStorage.getItem("adminToken");
+  const savedUserData = JSON.parse(localStorage.getItem("adminUser"));
 
+  if (!token || !savedUserData) {
+    navigate("/admin");
+    return;
+  }
+
+  // SECURITY TRIPWIRE: 
+  // Students have a rollNo. Master Admins do not.
+  const isStudentAdmin = !!savedUserData.rollNo; 
+
+  if (isStudentAdmin) {
+    toast.error("ACCESS DENIED: Administrative Clearance Level 0 Required.");
+    navigate("/admin-dashboard"); // Force redirect away from Authority Manager
+    return;
+  }
+
+  fetchMemberships();
+}, [token, navigate]);
+
+  const updateMemberStatus = async (id, isApproved, updatedPermissions) => {
+    const loadToast = toast.loading("Syncing Authority...");
     try {
-      const token = localStorage.getItem("adminToken");
-      const response = await fetch(`http://localhost:3001/api"/admin/memberships/${id}`, {
+      const response = await fetch(`${API_URL}/memberships/permissions/${id}`, {
+        method: "PATCH",
+        headers: { 
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ 
+          approved: isApproved, 
+          status: isApproved ? "approved" : "pending",
+          permissions: updatedPermissions 
+        })
+      });
+
+      if (response.ok) {
+        setMemberships(prev => prev.map((m) =>
+          m._id === id ? { ...m, approved: isApproved, permissions: updatedPermissions } : m
+        ));
+        toast.success("Authority Synced.", { id: loadToast });
+      } else {
+        const result = await response.json();
+        throw new Error(result.message || "Server rejected update");
+      }
+    } catch (error) {
+      toast.error("Sync Failed: " + error.message, { id: loadToast });
+    }
+  };
+
+ // In the togglePermission function, ensure isAdmin is always true for approved members:
+const togglePermission = (member, field) => {
+  const newPermissions = { 
+    ...member.permissions, 
+    [field]: !member.permissions?.[field],
+    isAdmin: true // Always true so they can reach the dashboard
+  };
+  updateMemberStatus(member._id, true, newPermissions);
+};
+  const deleteMembership = async (id) => {
+    if(!window.confirm("PERMANENT PURGE? This will erase all record of this member.")) return;
+    try {
+      const response = await fetch(`${API_URL}/memberships/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!response.ok) throw new Error("Error deleting membership.");
-
-      const data = await response.json();
-      // alert(data.message); // Optional
-      setMemberships(memberships.filter((membership) => membership._id !== id));
+      if (response.ok) {
+        toast.success("Record Purged.");
+        setMemberships(memberships.filter((m) => m._id !== id));
+      }
     } catch (error) {
-      alert(error.message || "Error deleting membership.");
+      toast.error("Purge Failed.");
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[#020617] text-white overflow-hidden relative selection:bg-cyan-500/30">
-      
-      {/* --- BACKGROUND DESIGN START --- */}
-      <div className="absolute inset-0 z-0 w-full h-full bg-[linear-gradient(to_right,#FFD70020_1px,transparent_1px),linear-gradient(to_bottom,#FFD70020_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-      
-      <motion.div
-        className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none"
-        animate={{ x: [-50, 50, -50], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* --- BACKGROUND DESIGN END --- */}
+// Change your permissionMeta array in AdminMemberships.jsx to this:
+const permissionMeta = [
+  { key: 'canManageEvents', label: 'Event Ledger', desc: 'Ops Control' },
+  { key: 'canManageAnnouncements', label: 'News Feed', desc: 'Broadcast' },
+  { key: 'canViewRegistrations', label: 'Registry', desc: 'Data Access' }
+];
 
-      <div className="relative z-10 px-6 py-24 max-w-6xl mx-auto">
-        
-        <div className="text-center mb-12">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-4xl md:text-5xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 mb-4"
-          >
-            Membership <span className="text-[#FFD700]">Applications</span>
-          </motion.h1>
-          <p className="text-slate-400">Review and manage incoming requests to join the society.</p>
+
+
+  return (
+    <div className="min-h-screen bg-[#020617] text-white overflow-hidden relative selection:bg-blue-500/30 font-sans">
+      
+      {/* --- ENHANCED GOLDEN GRID --- */}
+      <div className="absolute inset-0 z-0 w-full h-full bg-[linear-gradient(to_right,#FFD70015_1px,transparent_1px),linear-gradient(to_bottom,#FFD70015_1px,transparent_1px)] bg-[size:4.5rem_4.5rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      
+      <div className="relative z-10 px-6 pt-32 pb-24 max-w-7xl mx-auto">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-20 gap-8">
+          <div>
+            <h1 className="text-6xl font-black tracking-tighter uppercase leading-none">
+              Authority <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-yellow-500">Manager</span>
+            </h1>
+            <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.5em] mt-4 flex items-center gap-2">
+              <span className="w-8 h-px bg-slate-800"></span> RBAC Deployment Module
+            </p>
+          </div>
+          <button onClick={() => navigate("/admin-dashboard")} className="px-8 py-4 rounded-2xl bg-slate-900/50 border border-slate-800 text-[10px] font-black uppercase tracking-widest hover:border-[#FFD700]/40 transition-all hover:shadow-[0_0_20px_rgba(255,215,0,0.1)]">
+            Back to Command
+          </button>
         </div>
 
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-center mb-8">
-            {error}
-          </div>
-        )}
-
         {loading ? (
-           <div className="text-center py-20 text-slate-500">
-             <div className="inline-block w-8 h-8 border-2 border-t-blue-500 border-slate-700 rounded-full animate-spin mb-4"></div>
-             <p>Loading applications...</p>
-           </div>
+            <div className="flex justify-center py-20 text-[10px] font-black uppercase tracking-widest text-slate-600 animate-pulse">Synchronizing Ledger...</div>
         ) : (
-          <div className="space-y-4">
-            {memberships.length === 0 ? (
-               <div className="text-center py-20 bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed">
-                 <p className="text-slate-500 text-lg">No pending applications found.</p>
-               </div>
-            ) : (
-              <div className="grid gap-4">
-                 <div className="hidden md:grid grid-cols-12 gap-4 px-6 py-3 text-xs font-bold text-slate-500 uppercase tracking-wider">
-                    <div className="col-span-4">Applicant</div>
-                    <div className="col-span-3">Role</div>
-                    <div className="col-span-3">Contact</div>
-                    <div className="col-span-2 text-right">Actions</div>
-                 </div>
+          <div className="space-y-6">
+            <div className="hidden lg:grid grid-cols-12 gap-6 px-10 py-4 text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] border-b border-slate-900">
+              <div className="col-span-4">Candidate Identity</div>
+              <div className="col-span-6 text-center">Permission Matrix // Access Levels</div>
+              <div className="col-span-2 text-right">Operations</div>
+            </div>
 
-                 {memberships.map((membership, index) => (
-                  <motion.div
-                    key={membership._id || index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.05 }}
-                    className="group bg-slate-900/60 hover:bg-slate-900/80 backdrop-blur-md border border-slate-800 hover:border-blue-500/30 p-5 rounded-2xl transition-all shadow-lg hover:shadow-blue-500/5"
-                  >
-                    <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
-                      
-                      <div className="md:col-span-4 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-                          {membership.fullName.charAt(0)}
-                        </div>
-                        <div>
-                          <h3 className="text-base font-bold text-white group-hover:text-[#FFD700] transition-colors">
-                            {membership.fullName}
-                          </h3>
-                          <div className="flex gap-2 text-xs text-slate-500">
-                             <span>ID: {membership.rollNo || "N/A"}</span>
-                             {membership.semester && <span>• {membership.semester}</span>}
-                          </div>
-                        </div>
-                      </div>
+            <AnimatePresence>
+            {memberships.map((m) => (
+              <motion.div key={m._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }}
+                className="bg-slate-900/30 backdrop-blur-3xl border border-slate-800/60 p-8 rounded-[2.5rem] hover:border-[#FFD700]/30 transition-all duration-500 group"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                  
+                  {/* IDENTITY SECTION */}
+                  {/* IDENTITY SECTION - Now with prominent Email display */}
+<div className="lg:col-span-4 flex items-center gap-6">
+  <div className={`w-16 h-16 rounded-3xl flex items-center justify-center font-black border-2 shrink-0 transition-all duration-700 ${m.approved ? 'bg-blue-600/10 border-blue-500/40 text-blue-400 shadow-[0_0_30px_rgba(37,99,235,0.15)]' : 'bg-slate-950 border-slate-800 text-slate-700'}`}>
+    {m.fullName?.charAt(0)}
+  </div>
+  <div className="overflow-hidden">
+    <h3 className="text-xl font-black text-white uppercase tracking-tight truncate group-hover:text-[#FFD700] transition-colors">
+      {m.fullName}
+    </h3>
+    <div className="flex flex-col gap-1 mt-1">
+       {/* High Visibility Roll No and Email for Activation */}
+       <span className="text-[11px] text-blue-500 font-mono font-black tracking-tighter">
+         {m.rollNo}
+       </span>
+       <div className="flex items-center gap-2">
+         <span className="w-1.5 h-1.5 rounded-full bg-[#FFD700] animate-pulse"></span>
+         <span className="text-[11px] text-[#FFD700] font-bold tracking-wide select-all cursor-copy" title="Click to copy for activation">
+           {m.gmail}
+         </span>
+       </div>
+       <span className="text-[9px] text-slate-600 uppercase font-bold tracking-wider mt-1 italic">
+         {m.semester} Semester // {m.department}
+       </span>
+    </div>
+  </div>
+</div>
 
-                      {/* Role */}
-                      <div className="md:col-span-3">
-                         <span className="inline-block px-2 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-300 text-xs font-medium">
-                           {membership.applyingRole || membership.role || "General Member"}
-                         </span>
-                         <p className="text-xs text-slate-500 mt-1">{membership.department}</p>
-                      </div>
-
-                      {/* Contact */}
-                      <div className="md:col-span-3 text-sm text-slate-400">
-                        <div className="flex items-center gap-2" title={membership.email}>
-                           <svg className="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                           <span className="truncate max-w-[150px]">{membership.email}</span>
-                        </div>
-                        {membership.phoneNumber && (
-                          <div className="flex items-center gap-2 mt-1">
-                             <svg className="w-3 h-3 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                             <span>{membership.phoneNumber}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div className="md:col-span-2 flex justify-end gap-2">
-                        {membership.approved ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-green-500/10 text-green-400 border border-green-500/20 flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                            Approved
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => approveMembership(membership._id)}
-                            className="p-2 rounded-lg bg-green-500/10 text-green-400 hover:bg-green-500 hover:text-white border border-green-500/20 transition-all"
-                            title="Approve"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" /></svg>
-                          </button>
-                        )}
-                        
-                        <button
-                          onClick={() => deleteMembership(membership._id)}
-                          className="p-2 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/20 transition-all"
-                          title="Reject / Delete"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                        </button>
-                      </div>
-
+                  {/* ENHANCED PERMISSION MATRIX */}
+                  <div className="lg:col-span-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {permissionMeta.map((perm) => (
+                           <button key={perm.key} onClick={() => togglePermission(m, perm.key)}
+                             className={`p-3 rounded-2xl border transition-all duration-300 flex flex-col items-center justify-center text-center gap-1 ${
+                               m.permissions?.[perm.key] 
+                               ? 'bg-blue-600/10 border-blue-500/50 shadow-[0_0_15px_rgba(37,99,235,0.1)]' 
+                               : 'bg-slate-950 border-slate-800/50 opacity-40 hover:opacity-100'
+                             }`}
+                           >
+                             <span className={`text-[9px] font-black uppercase tracking-tighter ${m.permissions?.[perm.key] ? 'text-blue-400' : 'text-slate-500'}`}>
+                               {perm.label}
+                             </span>
+                             <span className={`text-[7px] font-bold uppercase tracking-[0.2em] ${m.permissions?.[perm.key] ? 'text-blue-500/60' : 'text-slate-700'}`}>
+                               {m.permissions?.[perm.key] ? 'Access Granted' : 'Restricted'}
+                             </span>
+                           </button>
+                        ))}
                     </div>
-                  </motion.div>
-                 ))}
-              </div>
-            )}
+                  </div>
+
+                  {/* OPERATIONS */}
+                  <div className="lg:col-span-2 flex justify-end items-center gap-4">
+                    {!m.approved ? (
+                      <button onClick={() => updateMemberStatus(m._id, true, m.permissions)}
+                        className="flex-grow py-4 rounded-2xl bg-gradient-to-r from-[#FFD700] to-yellow-600 text-black text-[10px] font-black uppercase tracking-widest hover:brightness-110 transition-all shadow-xl active:scale-95"
+                      >
+                        Approve
+                      </button>
+                    ) : (
+                      <div className="flex-grow text-center py-4 border border-blue-500/20 rounded-2xl bg-blue-500/5">
+                         <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Active Node</span>
+                      </div>
+                    )}
+                    <button onClick={() => deleteMembership(m._id)} className="p-4 rounded-2xl bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500 hover:text-white hover:border-red-500 transition-all group-hover:opacity-100 lg:opacity-30">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+            </AnimatePresence>
           </div>
         )}
       </div>

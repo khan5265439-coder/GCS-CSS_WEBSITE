@@ -1,145 +1,167 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { API_URL } from "../App"; // Unified import
 
-export default function About() {
+export default function Announcements() {
+  const [announcements, setAnnouncements] = useState([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      try {
+        const response = await fetch(`${API_URL}/announcements`);
+        const data = await response.json();
+        
+        // Safety: Filter for public display
+        const list = Array.isArray(data) ? data : (data.success ? data.data || [] : []);
+        setAnnouncements(list.filter(a => !a.isArchived));
+      } catch (error) {
+        setError("Uplink failed. Monitoring system suggests connection issues.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnnouncements();
+  }, []);
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "Active Now";
+    return new Date(dateString).toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'short', 
+      year: 'numeric' 
+    });
+  };
+
+  const getBadgeStyle = (type) => {
+    switch (type?.toLowerCase()) {
+      case "notice": return "bg-red-500/10 text-red-400 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]";
+      case "opportunity": return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
+      case "result": return "bg-amber-500/10 text-amber-400 border-amber-500/20 shadow-[0_0_15px_rgba(245,158,11,0.1)]";
+      case "update": return "bg-blue-500/10 text-blue-400 border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.1)]";
+      default: return "bg-slate-800 text-slate-400 border-slate-700";
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white overflow-hidden relative selection:bg-cyan-500/30">
-      {/* --- BACKGROUND DESIGN START --- */}
-      {/* UPDATED: Golden Grid */}
-      <div className="absolute inset-0 z-0 w-full h-full bg-[linear-gradient(to_right,#FFD70020_1px,transparent_1px),linear-gradient(to_bottom,#FFD70020_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-
+    <div className="min-h-screen bg-[#020617] text-white overflow-hidden relative selection:bg-blue-500/30">
+      
+      {/* --- RESTORED: Golden Grid with High Visibility --- */}
+      <div className="absolute inset-0 z-0 w-full h-full bg-[linear-gradient(to_right,#FFD70015_1px,transparent_1px),linear-gradient(to_bottom,#FFD70015_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)]" />
+      
       <motion.div
-        className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none"
-        animate={{ x: [-20, 20, -20], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute top-[-10%] right-[-10%] w-[600px] h-[600px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none"
+        animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.3, 0.2] }}
+        transition={{ duration: 12, repeat: Infinity }}
       />
-      <motion.div
-        className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-indigo-600/10 blur-[120px] pointer-events-none"
-        animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-      />
-      {/* --- BACKGROUND DESIGN END --- */}
 
-      <div className="relative z-10 px-6 py-24 max-w-7xl mx-auto">
-
+      {/* --- CONTENT START --- */}
+      <div className="relative z-10 px-6 pt-32 pb-24 max-w-5xl mx-auto">
+        
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-center max-w-4xl mx-auto mb-20"
+          className="text-center mb-20"
         >
-          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400 mb-6">
-            About The <span className="text-[#FFD700]">Society</span>
+          <div className="inline-block px-3 py-1 rounded-full border border-blue-500/20 bg-blue-500/5 text-blue-400 text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+            Real-time Feed
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-none mb-6">
+            Society <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#FFD700] to-yellow-500">Updates</span>
           </h1>
-          <p className="text-slate-400 text-lg md:text-xl leading-relaxed">
-            The Computer Science Society (CSS) at GCU Lahore is a vibrant student-led
-            organization dedicated to promoting innovation, leadership, and technical
-            excellence among computing students.
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto font-medium">
+            Stay synchronized with the latest departmental notices and 
+            technological breakthroughs within the GCU ecosystem.
           </p>
         </motion.div>
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-24"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, staggerChildren: 0.2 }}
-        >
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ y: -5 }}
-            className="bg-slate-900/50 border border-slate-800 backdrop-blur-xl p-8 rounded-3xl shadow-xl hover:border-blue-500/30 transition-all duration-300"
-          >
-            <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-400">
-               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-            </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Our Mission</h2>
-            <p className="text-slate-400 leading-relaxed">
-              To empower students with the knowledge, tools, and opportunities needed
-              to excel in the ever-evolving fields of computer science and technology.
-              We foster a culture of creativity, collaboration, and hands-on learning.
-            </p>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            whileHover={{ y: -5 }}
-            className="bg-slate-900/50 border border-slate-800 backdrop-blur-xl p-8 rounded-3xl shadow-xl hover:border-[#FFD700]/30 transition-all duration-300"
-          >
-             <div className="w-14 h-14 bg-yellow-500/10 rounded-2xl flex items-center justify-center mb-6 text-[#FFD700]">
-               <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+        {error && (
+          <div className="bg-red-500/5 border border-red-500/20 text-red-400 p-6 rounded-[2.5rem] text-center mb-12 backdrop-blur-xl">
+            <span className="font-black uppercase text-[10px] tracking-widest">System Alert: {error}</span>
+          </div>
+        )}
+
+        <div className="space-y-8">
+          {loading ? (
+            <div className="text-center py-24 flex flex-col items-center">
+               <div className="w-10 h-10 border-2 border-t-[#FFD700] border-slate-800 rounded-full animate-spin mb-6"></div>
+               <p className="text-[10px] font-black uppercase tracking-widest text-slate-600">Syncing Frequencies...</p>
             </div>
-            <h2 className="text-2xl font-bold text-white mb-4">Our Vision</h2>
-            <p className="text-slate-400 leading-relaxed">
-              To create one of the most impactful and forward-thinking student societies
-              in Pakistan — where every aspiring technologist finds guidance, exposure,
-              and opportunities to grow.
-            </p>
-          </motion.div>
-        </motion.div>
+          ) : announcements.length === 0 ? (
+            <div className="text-center py-24 bg-slate-900/20 rounded-[3rem] border border-slate-800 border-dashed backdrop-blur-sm">
+              <p className="text-slate-600 font-bold uppercase tracking-widest text-xs italic">The broadcast frequency is currently silent.</p>
+            </div>
+          ) : (
+            <AnimatePresence>
+              {announcements.map((item, index) => (
+                <motion.article
+                  key={item._id || index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="group relative bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] border border-slate-800 p-8 sm:p-10 transition-all duration-500 hover:border-[#FFD700]/30 hover:shadow-2xl overflow-hidden cursor-default"
+                >
+                  {/* Subtle Light Scan Effect on Hover */}
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500 blur-[120px] opacity-0 group-hover:opacity-10 transition-opacity duration-700" />
+                  
+                  <div className="flex flex-col md:flex-row justify-between gap-8 items-start relative z-10">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-4 mb-6">
+                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border transition-all duration-500 group-hover:scale-105 ${getBadgeStyle(item.type)}`}>
+                          {item.type || "Update"}
+                        </span>
+                        <div className="flex items-center gap-2">
+                           <div className="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-[#FFD700] transition-colors" />
+                           <span className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                             {formatDate(item.createdAt || item.date)}
+                           </span>
+                        </div>
+                      </div>
+
+                      <h3 className="text-3xl font-black text-white group-hover:text-blue-400 transition-colors mb-4 uppercase tracking-tighter leading-tight">
+                        {item.title}
+                      </h3>
+                      <p className="text-slate-400 leading-relaxed font-medium text-base group-hover:text-slate-300 transition-colors">
+                        {item.description}
+                      </p>
+                    </div>
+                    
+                    {item.link && (
+                      <motion.a 
+                        whileHover={{ x: 5 }}
+                        href={item.link} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="px-6 py-3 rounded-xl bg-slate-950 border border-slate-800 text-slate-400 font-black uppercase tracking-widest text-[9px] hover:border-[#FFD700] hover:text-[#FFD700] transition-all shrink-0 shadow-xl"
+                      >
+                        Launch Protocol →
+                      </motion.a>
+                    )}
+                  </div>
+                </motion.article>
+              ))}
+            </AnimatePresence>
+          )}
+        </div>
+
+        {/* --- PREMIUM CALL TO ACTION --- */}
         <motion.div
-          className="relative z-10 mb-24"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          whileHover={{ scale: 1.01 }}
+          className="mt-32 p-12 md:p-16 rounded-[3.5rem] border border-slate-800 bg-slate-900/30 backdrop-blur-2xl text-center relative overflow-hidden group transition-all duration-500 hover:border-blue-500/20"
         >
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Our Goals & Objectives</h2>
-            <div className="w-24 h-1 bg-gradient-to-r from-transparent via-blue-500 to-transparent mx-auto rounded-full"></div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              {
-                title: "Skill Development",
-                text: "Conduct workshops and bootcamps to strengthen students’ practical understanding of AI, Web, Cyber Security, Cloud, and Data Science.",
-                icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>)
-              },
-              {
-                title: "Community Building",
-                text: "Create an inclusive environment where students from all backgrounds collaborate, network, and learn from one another.",
-                icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>)
-              },
-              {
-                title: "Innovation & Leadership",
-                text: "Encourage students to take initiative, lead events, develop projects, and participate in national-level competitions.",
-                icon: (<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)
-              }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                whileHover={{ y: -5 }}
-                className="bg-slate-900/30 border border-slate-800/60 backdrop-blur-lg p-8 rounded-2xl hover:bg-slate-800/50 hover:border-blue-500/20 transition-all duration-300"
-              >
-                <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center mb-4 text-blue-400 group-hover:text-white">
-                  {item.icon}
-                </div>
-                <h3 className="text-xl font-bold text-white mb-3">{item.title}</h3>
-                <p className="text-slate-400 text-sm leading-relaxed">{item.text}</p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-        <motion.div
-          className="relative z-10 bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 backdrop-blur-xl p-10 md:p-12 rounded-3xl shadow-2xl max-w-5xl mx-auto"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-50" />
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6 text-center">
-            A Brief <span className="text-[#FFD700]">History</span>
-          </h2>
-
-          <p className="text-slate-300 text-lg leading-relaxed text-center max-w-3xl mx-auto">
-            The Computer Science Society at GCU Lahore has played a pivotal role in
-            supporting and uplifting young technologists across the university. From
-            hosting Pakistan’s largest student-led tech competitions to facilitating
-            skill-building workshops, CSS continues to evolve and adapt to emerging
-            technologies — empowering students every step of the way.
-          </p>
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent opacity-40 group-hover:opacity-100 transition-opacity" />
+          <h3 className="text-4xl font-black text-white mb-4 uppercase tracking-tighter leading-none">Stay In the Loop</h3>
+          <p className="text-slate-400 mb-10 max-w-lg mx-auto font-medium">Synchronize with our community to receive direct alerts on results, hackathons, and board updates.</p>
+          
+          <button className="px-12 py-5 rounded-full bg-gradient-to-r from-[#FFD700] via-[#FDB931] to-[#FFA500] text-black font-black uppercase tracking-widest text-[10px] shadow-[0_0_20px_rgba(255,215,0,0.3)] hover:shadow-[0_0_40px_rgba(255,215,0,0.5)] hover:scale-105 hover:brightness-110 transition-all duration-500 active:scale-95">
+  Connect to Community
+</button>
         </motion.div>
 
       </div>

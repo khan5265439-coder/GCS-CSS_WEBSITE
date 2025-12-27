@@ -1,47 +1,50 @@
-/* Tailwind's base styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Custom styles (if needed) */
 @layer base {
-  /* Body and text color */
   body {
-    background-color: #0f172a;
-    color: white;
+    @apply bg-slate-950 text-white antialiased;
     font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
   }
 }
 
 @layer components {
-  /* Custom button styles or other components can be defined here */
+  /* Glassmorphism card - Perfect for Admin Dashboard */
+  .glass-card {
+    @apply bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-xl;
+  }
+  
+  /* Standardized Admin Header Style */
+  .admin-header {
+    @apply text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-yellow-400;
+  }
 }
 
-@layer utilities {
-  /* Additional custom utility classes can go here */
-}
-/* --- Advanced Scrollbar --- */
+/* --- Luxury Scrollbar --- */
 @layer base {
-  /* Width */
   ::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
   }
 
-  /* Track (Background) */
   ::-webkit-scrollbar-track {
-    background: #020617; 
-    border-left: 1px solid #1e293b;
+    background: #020617;
   }
  
-  /* Handle (The moving part) */
   ::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, #3b82f6, #FFD700); /* Blue to Gold Gradient */
-    border-radius: 5px;
-    border: 2px solid #020617; /* Creates a "floating" effect */
+    background: linear-gradient(180deg, #3b82f6, #FFD700);
+    border-radius: 100vh;
+    border: 2px solid #020617;
   }
 
-  /* Handle on hover */
   ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #2563eb, #fbbf24);
+    background: linear-gradient(180deg, #60a5fa, #fbbf24);
   }
+}
+
+/* --- Global Selection Color --- */
+::selection {
+  background: #3b82f6;
+  color: white;
 }
