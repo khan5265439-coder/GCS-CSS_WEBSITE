@@ -9,7 +9,11 @@ const app = express();
 connectDB();
 
 // 2. Global Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["https://your-vercel-project.vercel.app", "http://localhost:5173"], // Add your Vercel URL here later
+  credentials: true
+}));
+
 app.use(express.json());
 
 /**
