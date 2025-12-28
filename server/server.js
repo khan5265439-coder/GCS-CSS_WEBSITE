@@ -9,11 +9,7 @@ const app = express();
 connectDB();
 
 // 2. Global Middleware
-app.use(cors({
-  origin: ["https://cs-society-gcu-git-main-khan5265439-1153s-projects.vercel.app/", "http://localhost:5173"], // Add your Vercel URL here later
-  credentials: true
-}));
-
+app.use(cors());
 app.use(express.json());
 
 /**
